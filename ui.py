@@ -60,16 +60,22 @@ class MyWidget(QtWidgets.QWidget):
         self.button = QtWidgets.QPushButton("Click here!")
         self.text = QtWidgets.QLabel("AG Patch Roulette",
                                      alignment=QtCore.Qt.AlignCenter)
-
+        self.text.setStyleSheet("QLabel{font-size: 18pt;}")
+        self.button.setStyleSheet("QPushButton{height: 50px; width: 200px;font-size: 18pt;}")
         self.layout = QtWidgets.QVBoxLayout(self)
         self.layout.addWidget(self.text)
+        self.label = QtWidgets.QLabel(self, alignment=QtCore.Qt.AlignHCenter)
+        self.layout.addWidget(self.label)
         self.layout.addWidget(self.button)
+        
         self.threadpool = QtCore.QThreadPool()
 
         self.button.clicked.connect(self.start_threads)
 
     def update_label(self, s):
-        self.text.setText(s)
+        print(s)
+        pixmap = QtGui.QPixmap(f'assets/{s}.png').scaledToHeight(512)
+        self.label.setPixmap(pixmap)
 
     @QtCore.Slot()
     def start_threads(self):

@@ -1,48 +1,41 @@
 import os.path
 
 from google.auth.transport.requests import Request
-from google.oauth2.credentials import Credentials
+#from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
+from google.oauth2.service_account import Credentials
 from googleapiclient.errors import HttpError
 
 import gspread
 
 # If modifying these scopes, delete the file token.json.
-SCOPES = ["https://www.googleapis.com/auth/spreadsheets.readonly"]
+SCOPES = [
+  'https://www.googleapis.com/auth/spreadsheets'
+  ]
 
 # The ID and range of a sample spreadsheet.
 with open("sheet_id.txt") as file:
   SAMPLE_SPREADSHEET_ID = file.read()
 
 
+def get_service():
+  credentials = Credentials.from_service_account_file(
+            "service_account.json", scopes=SCOPES)
+
+  # Build the service object.
+  service = build('sheets', 'v4', credentials=credentials)
+  
+  return service
+
 def get_initial_list():
   """Shows basic usage of the Sheets API.
   Prints values from a sample spreadsheet.
   """
-  creds = None
   range_name = "Patches!A2:A"
-
-  # The file token.json stores the user's access and refresh tokens, and is
-  # created automatically when the authorization flow completes for the first
-  # time.
-  if os.path.exists("token.json"):
-    creds = Credentials.from_authorized_user_file("token.json", SCOPES)
-  # If there are no (valid) credentials available, let the user log in.
-  if not creds or not creds.valid:
-    if creds and creds.expired and creds.refresh_token:
-      creds.refresh(Request())
-    else:
-      flow = InstalledAppFlow.from_client_secrets_file(
-          "credentials.json", SCOPES
-      )
-      creds = flow.run_local_server(port=0)
-    # Save the credentials for the next run
-    with open("token.json", "w") as token:
-      token.write(creds.to_json())
-
+  # Build the service object.
   try:
-    service = build("sheets", "v4", credentials=creds)
+    service = get_service()
 
     # Call the Sheets API
     sheet = service.spreadsheets()
@@ -66,28 +59,12 @@ def get_patches():
   """Shows basic usage of the Sheets API.
   Prints values from a sample spreadsheet.
   """
-  creds = None
   range_name = "Patches!A2:B"
   # The file token.json stores the user's access and refresh tokens, and is
   # created automatically when the authorization flow completes for the first
   # time.
-  if os.path.exists("token.json"):
-    creds = Credentials.from_authorized_user_file("token.json", SCOPES)
-  # If there are no (valid) credentials available, let the user log in.
-  if not creds or not creds.valid:
-    if creds and creds.expired and creds.refresh_token:
-      creds.refresh(Request())
-    else:
-      flow = InstalledAppFlow.from_client_secrets_file(
-          "credentials.json", SCOPES
-      )
-      creds = flow.run_local_server(port=0)
-    # Save the credentials for the next run
-    with open("token.json", "w") as token:
-      token.write(creds.to_json())
-
   try:
-    service = build("sheets", "v4", credentials=creds)
+    service = get_service()
 
     # Call the Sheets API
     sheet = service.spreadsheets()
@@ -120,9 +97,8 @@ def get_patches():
 
 
 def update_inventory(patch):
-  gc = gspread.oauth(
-    credentials_filename='credentials.json',
-  )
+  gc = gspread.service_account(filename='service_account.json')
+  print(SAMPLE_SPREADSHEET_ID)
   sh = gc.open_by_key(SAMPLE_SPREADSHEET_ID)
   worksheet = sh.get_worksheet(0)
   cell = worksheet.find(patch)
